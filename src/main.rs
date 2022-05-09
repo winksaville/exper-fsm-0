@@ -22,14 +22,16 @@ impl StateMachine {
 
     fn process_msg(&mut self, msg: &Protocol1) {
         match self.current_state {
-            States::State1 => {
-                match *msg {
-                    Protocol1::Msg1 { f1 } => {
-                        self.data1 += 1;
-                        println!("State1: process sm.data1={} Msg1::f1={}", self.data1, f1);
-                    }
-                }
-            }
+            States::State1 => state1_process_msg(self, msg),
+        }
+    }
+}
+
+fn state1_process_msg(sm: &mut StateMachine, msg: &Protocol1) {
+    match *msg {
+        Protocol1::Msg1 { f1 } => {
+            sm.data1 += 1;
+            println!("State1: process sm.data1={} Msg1::f1={}", sm.data1, f1);
         }
     }
 }
