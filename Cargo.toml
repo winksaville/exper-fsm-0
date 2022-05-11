@@ -7,3 +7,13 @@ edition = "2021"
 
 [dependencies]
 
+[dev-dependencies]
+criterion = "0.3.5"
+
+[[bench]]
+name = "bench_current_state_enum"
+harness = false
+
+[[bench]]
+name = "bench_current_state_fn_ptr"
+harness = false
