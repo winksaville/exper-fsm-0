@@ -1,6 +1,6 @@
-use criterion::{criterion_group, criterion_main, black_box, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use expr_fsm_0::enum_state_machine::{StateMachine, Protocol1, States};
+use expr_fsm_0::enum_state_machine::{Protocol1, StateMachine, States};
 
 pub fn dispatch_add_msg_to_state_add_enum_sm(c: &mut Criterion) {
     c.bench_function("dispatch_add_msg_to_state_add_enum_sm", |b| {
@@ -42,7 +42,11 @@ pub fn dispatch_mul_msg_to_state_any_enum_sm(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches_enum_sm,
-    dispatch_add_msg_to_state_add_enum_sm, dispatch_add_msg_to_state_any_enum_sm,
-    dispatch_mul_msg_to_state_mul_enum_sm, dispatch_mul_msg_to_state_any_enum_sm);
+criterion_group!(
+    benches_enum_sm,
+    dispatch_add_msg_to_state_add_enum_sm,
+    dispatch_add_msg_to_state_any_enum_sm,
+    dispatch_mul_msg_to_state_mul_enum_sm,
+    dispatch_mul_msg_to_state_any_enum_sm
+);
 criterion_main!(benches_enum_sm);
