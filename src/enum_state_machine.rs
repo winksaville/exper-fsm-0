@@ -49,7 +49,7 @@ impl StateMachine {
             }
             _ => panic!("state_add_or_mul only supports Add or Mul msgs"),
         }
-        //self.transition_to(States::StateAny);
+        self.transition_to(States::StateAny);
     }
 
     pub fn state_any_process_msg(&mut self, msg: &Protocol1) {
@@ -64,6 +64,6 @@ impl StateMachine {
                 self.data1 *= f1;
             }
         }
-        //self.transition_to(States::StateAddOrMul);
+        self.transition_to(States::StateAddOrMul);
     }
 }
