@@ -38,13 +38,13 @@ fn main() {
         use fn_ptr_state_machine::{Protocol1, StateMachine};
 
         // Create state machine with its initial state
-        let mut sm = StateMachine::new(StateMachine::state_add_or_mul_process_msg);
-        assert!(sm.current_state as usize == StateMachine::state_add_or_mul_process_msg as usize);
+        let mut sm = StateMachine::new(StateMachine::state_process_msg_add_or_mul);
+        assert!(sm.current_state as usize == StateMachine::state_process_msg_add_or_mul as usize);
 
         // Create a message and dispatch it to the state machine
         let msg = Protocol1::Add { f1: 123 };
         sm.dispatch_msg(&msg);
-        assert!(sm.current_state as usize == StateMachine::state_any_process_msg as usize);
+        assert!(sm.current_state as usize == StateMachine::state_process_msg_any as usize);
         println!("sm.data1={}", sm.data1);
 
         let msg = Protocol1::Add { f1: 123 };
@@ -53,11 +53,11 @@ fn main() {
         //let expected_state: &dyn for<'a> Fn(&'a mut StateMachine, &'a Protocol1) = &StateMachine::state_any_process_msg;
         //assert!(cs == expected_state);
         sm.dispatch_msg(&msg);
-        assert!(sm.current_state as usize == StateMachine::state_add_or_mul_process_msg as usize);
+        assert!(sm.current_state as usize == StateMachine::state_process_msg_add_or_mul as usize);
         println!("sm.data1={}", sm.data1);
 
         sm.dispatch_msg(&msg);
-        assert!(sm.current_state as usize == StateMachine::state_any_process_msg as usize);
+        assert!(sm.current_state as usize == StateMachine::state_process_msg_any as usize);
         println!("sm.data1={}", sm.data1);
     }
 
