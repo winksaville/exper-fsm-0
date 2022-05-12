@@ -5,10 +5,9 @@ pub enum Protocol1 {
     Mul { f1: i32 },
 }
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum States {
-    StateAdd,
-    StateSub,
-    StateMul,
+    StateAddOrMul,
     StateAny,
 }
 
@@ -25,16 +24,14 @@ impl StateMachine {
         }
     }
 
+    pub fn transition_to(&mut self, next_state: States) {
+        self.current_state = next_state;
+    }
+
     pub fn dispatch_msg(&mut self, msg: &Protocol1) {
         match self.current_state {
-            States::StateAdd => {
-                self.state_add_process_msg(msg);
-            }
-            States::StateSub => {
-                self.state_sub_process_msg(msg);
-            }
-            States::StateMul => {
-                self.state_mul_process_msg(msg);
+            States::StateAddOrMul => {
+                self.state_add_or_mul_process_msg(msg);
             }
             States::StateAny => {
                 self.state_any_process_msg(msg);
@@ -42,31 +39,17 @@ impl StateMachine {
         }
     }
 
-    pub fn state_add_process_msg(&mut self, msg: &Protocol1) {
+    pub fn state_add_or_mul_process_msg(&mut self, msg: &Protocol1) {
         match *msg {
             Protocol1::Add { f1 } => {
                 self.data1 += f1;
             }
-            _ => panic!("State1 only supports Add msgs"),
-        }
-    }
-
-    pub fn state_sub_process_msg(&mut self, msg: &Protocol1) {
-        match *msg {
-            Protocol1::Sub { f1 } => {
-                self.data1 -= f1;
-            }
-            _ => panic!("StateSub only supports Sub msgs"),
-        }
-    }
-
-    pub fn state_mul_process_msg(&mut self, msg: &Protocol1) {
-        match *msg {
             Protocol1::Mul { f1 } => {
                 self.data1 *= f1;
             }
-            _ => panic!("StateMul only supports Mul msgs"),
+            _ => panic!("state_add_or_mul only supports Add or Mul msgs"),
         }
+        //self.transition_to(States::StateAny);
     }
 
     pub fn state_any_process_msg(&mut self, msg: &Protocol1) {
@@ -81,5 +64,6 @@ impl StateMachine {
                 self.data1 *= f1;
             }
         }
+        //self.transition_to(States::StateAddOrMul);
     }
 }
