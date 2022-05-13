@@ -13,6 +13,12 @@ pub struct StateMachine {
     pub data1: i32,
 }
 
+impl Default for StateMachine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StateMachine {
     pub fn new() -> Self {
         let initial_state = StateMachine::state_process_msg_add_or_mul;
@@ -32,7 +38,10 @@ impl StateMachine {
     }
 
     pub fn dispatch_msg(&mut self, msg: &Protocol1) {
-        log::trace!("dispatch_msg: current_state={:0x}", self.current_state as usize);
+        log::trace!(
+            "dispatch_msg: current_state={:0x}",
+            self.current_state as usize
+        );
 
         if self.current_state_changed {
             // Handle state_entry
@@ -56,7 +65,6 @@ impl StateMachine {
                 self.state_exit_any(msg);
             }
         }
-
     }
 
     pub fn state_enter_add_or_mul(&mut self, msg: &Protocol1) {
@@ -80,7 +88,6 @@ impl StateMachine {
     pub fn state_exit_add_or_mul(&mut self, msg: &Protocol1) {
         log::trace!("state_exit_add_or_mul: msg={:?}", msg);
     }
-
 
     pub fn state_enter_any(&mut self, msg: &Protocol1) {
         log::trace!("state_enter_any: msg={:?}", msg);

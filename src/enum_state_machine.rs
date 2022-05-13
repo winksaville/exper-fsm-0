@@ -19,6 +19,12 @@ pub struct StateMachine {
     pub data1: i32,
 }
 
+impl Default for StateMachine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StateMachine {
     pub fn new() -> Self {
         let initial_state = States::StateAddOrMul;

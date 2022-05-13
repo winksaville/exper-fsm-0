@@ -7,7 +7,7 @@ fn enum_sm() {
     use enum_state_machine::{Protocol1, StateMachine, States};
 
     // Create state machine with its initial state
-    let mut sm = StateMachine::new();
+    let mut sm = StateMachine::default();
     assert!(sm.current_state == States::StateAddOrMul);
 
     // Create a message and dispatch it to the state machine
@@ -33,7 +33,7 @@ fn fn_ptr_sm() {
     use fn_ptr_state_machine::{Protocol1, StateMachine};
 
     // Create state machine with its initial state
-    let mut sm = StateMachine::new();
+    let mut sm = StateMachine::default();
     assert!(sm.current_state as usize == StateMachine::state_process_msg_add_or_mul as usize);
 
     // Create a message and dispatch it to the state machine
