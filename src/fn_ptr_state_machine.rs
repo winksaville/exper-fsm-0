@@ -14,7 +14,8 @@ pub struct StateMachine {
 }
 
 impl StateMachine {
-    pub fn new(initial_state: fn(&mut Self, &Protocol1)) -> Self {
+    pub fn new() -> Self {
+        let initial_state = StateMachine::state_process_msg_add_or_mul;
         StateMachine {
             current_state: initial_state,
             previous_state: initial_state,

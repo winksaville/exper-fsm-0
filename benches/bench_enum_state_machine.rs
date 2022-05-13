@@ -4,7 +4,7 @@ use expr_fsm_0::enum_state_machine::{Protocol1, StateMachine, States};
 
 pub fn dispatch_add_msg_to_state_add_enum_sm(c: &mut Criterion) {
     c.bench_function("dispatch_add_msg_to_state_add_enum_sm", |b| {
-        let mut sm = StateMachine::new(States::StateAddOrMul);
+        let mut sm = StateMachine::new();
         let msg = Protocol1::Add { f1: 1 };
         b.iter(|| {
             sm.dispatch_msg(black_box(&msg));
@@ -14,7 +14,7 @@ pub fn dispatch_add_msg_to_state_add_enum_sm(c: &mut Criterion) {
 
 pub fn dispatch_add_msg_to_state_any_enum_sm(c: &mut Criterion) {
     c.bench_function("dispatch_add_msg_to_state_any_enum_sm", |b| {
-        let mut sm = StateMachine::new(States::StateAny);
+        let mut sm = StateMachine::new();
         let msg = Protocol1::Add { f1: 1 };
         b.iter(|| {
             sm.dispatch_msg(black_box(&msg));
@@ -24,7 +24,7 @@ pub fn dispatch_add_msg_to_state_any_enum_sm(c: &mut Criterion) {
 
 pub fn dispatch_mul_msg_to_state_any_enum_sm(c: &mut Criterion) {
     c.bench_function("dispatch_mul_msg_to_state_any_enum_sm", |b| {
-        let mut sm = StateMachine::new(States::StateAny);
+        let mut sm = StateMachine::new();
         let msg = Protocol1::Mul { f1: 1 };
         b.iter(|| {
             sm.dispatch_msg(black_box(&msg));

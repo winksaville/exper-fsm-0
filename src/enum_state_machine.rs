@@ -20,7 +20,8 @@ pub struct StateMachine {
 }
 
 impl StateMachine {
-    pub fn new(initial_state: States) -> Self {
+    pub fn new() -> Self {
+        let initial_state = States::StateAddOrMul;
         StateMachine {
             current_state: initial_state,
             previous_state: initial_state,
