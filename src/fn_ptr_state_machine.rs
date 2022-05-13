@@ -33,8 +33,8 @@ impl StateMachine {
     pub fn dispatch_msg(&mut self, msg: &Protocol1) {
         log::trace!("dispatch_msg: current_state={:0x}", self.current_state as usize);
 
-        // Handle state_entry
         if self.current_state_changed {
+            // Handle state_entry
             if self.current_state as usize == StateMachine::state_process_msg_add_or_mul as usize {
                 self.state_enter_add_or_mul(msg);
             } else if self.current_state as usize == StateMachine::state_process_msg_any as usize {
@@ -47,8 +47,8 @@ impl StateMachine {
         // Dispatch the message to state_process_msg ...
         (self.current_state)(self, msg);
 
-        // Handle state_exit
         if self.current_state_changed {
+            // Handle state_exit
             if self.previous_state as usize == StateMachine::state_process_msg_add_or_mul as usize {
                 self.state_exit_add_or_mul(msg);
             } else if self.previous_state as usize == StateMachine::state_process_msg_any as usize {
