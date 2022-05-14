@@ -151,7 +151,9 @@ fn msg_passing_two_threads_fn_ptr() {
     // Get result using a separate channel
     let (tx_result, rx_result): (Sender<Protocol1>, Receiver<Protocol1>) = mpsc::channel();
     let msg_get = Protocol1::Get {
-        hdr: Header { tx_response: Some(tx_result) },
+        hdr: Header {
+            tx_response: Some(tx_result),
+        },
         data1: 0,
     };
     tx_work.send(msg_get).unwrap();

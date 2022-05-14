@@ -41,8 +41,8 @@ pub fn dispatch_mul_msg_to_state_any_fn_ptr_sm(c: &mut Criterion) {
     });
 }
 
-pub fn dispatch_get_to_state_any_one_thread_fn_ptr_sm(c: &mut Criterion) {
-    c.bench_function("dispatch_get_to_state_any_one_thread_fn_ptr_sm", |b| {
+pub fn std_sync_mpsc_channel_get_one_thread_fn_ptr_sm(c: &mut Criterion) {
+    c.bench_function("std_sync_mpsc_channel_get_one_thread_fn_ptr_sm", |b| {
         use std::sync::mpsc::{Receiver, Sender};
         let (tx, rx): (Sender<Protocol1>, Receiver<Protocol1>) = std::sync::mpsc::channel();
         let msg = Protocol1::Get {
@@ -65,11 +65,56 @@ pub fn dispatch_get_to_state_any_one_thread_fn_ptr_sm(c: &mut Criterion) {
     });
 }
 
+pub fn std_sync_mpsc_channel_get_two_threads_fn_ptr_sm(c: &mut Criterion) {
+    use std::sync::{
+        mpsc,
+        mpsc::{Receiver, Sender},
+    };
+
+    c.bench_function("std_sync_mpsc_channel_get_two_threads_fn_ptr_sm", |b| {
+        let (tx_work, rx_work): (Sender<Protocol1>, Receiver<Protocol1>) = mpsc::channel();
+
+        let receiver_thread = std::thread::spawn(move || {
+            let mut sm = StateMachine::default();
+            while let Ok(msg) = rx_work.recv() {
+                sm.dispatch_msg(&msg);
+            }
+        });
+
+        let (tx_result, rx_result): (Sender<Protocol1>, Receiver<Protocol1>) = mpsc::channel();
+        b.iter(|| {
+            // Create the Get Request Message
+            let get_req_msg = Protocol1::Get {
+                hdr: Header {
+                    tx_response: Some(tx_result.clone()),
+                },
+                data1: 0,
+            };
+
+            // Send it to the state machine on the other thread
+            tx_work.send(get_req_msg).unwrap();
+
+            // Get the response value which should be the default value of zero
+            let get_rsp_msg = rx_result.recv().unwrap();
+            let data1 = match get_rsp_msg {
+                Protocol1::Get { hdr: _, data1 } => data1,
+                _ => panic!("Expected Protocol1::Get get_rsp_msg={:?}", get_rsp_msg),
+            };
+            assert_eq!(data1, 0);
+        });
+        drop(tx_work);
+
+        receiver_thread.join().unwrap();
+        drop(rx_result);
+    });
+}
+
 criterion_group!(
     benches_fn_ptr_sm,
     dispatch_add_msg_to_state_add_fn_ptr_sm,
     dispatch_add_msg_to_state_any_fn_ptr_sm,
     dispatch_mul_msg_to_state_any_fn_ptr_sm,
-    dispatch_get_to_state_any_one_thread_fn_ptr_sm,
+    std_sync_mpsc_channel_get_one_thread_fn_ptr_sm,
+    std_sync_mpsc_channel_get_two_threads_fn_ptr_sm,
 );
 criterion_main!(benches_fn_ptr_sm);
