@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use expr_fsm_0::enum_state_machine::{Protocol1, StateMachine, States};
+use expr_fsm_0::enum_state_machine::{Protocol1, StateMachine};
 
 pub fn dispatch_add_msg_to_state_add_enum_sm(c: &mut Criterion) {
     c.bench_function("dispatch_add_msg_to_state_add_enum_sm", |b| {
