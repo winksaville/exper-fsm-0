@@ -59,7 +59,7 @@ pub fn std_sync_mpsc_channel_get_one_thread_fn_ptr_sm(c: &mut Criterion) {
                 Protocol1::Get { hdr: _, data1 } => {
                     assert_eq!(*data1, sm.data1);
                 }
-                _ => panic!("Expected Get response res={:?}", res),
+                _ => panic!("Expected Protocol1::Get response but got: `{:?}`", res),
             }
         });
     });
@@ -98,7 +98,7 @@ pub fn std_sync_mpsc_channel_get_two_threads_fn_ptr_sm(c: &mut Criterion) {
             let get_rsp_msg = rx_result.recv().unwrap();
             let data1 = match get_rsp_msg {
                 Protocol1::Get { hdr: _, data1 } => data1,
-                _ => panic!("Expected Protocol1::Get get_rsp_msg={:?}", get_rsp_msg),
+                _ => panic!("Expected Protocol1::Get but got: `{:?}`", get_rsp_msg),
             };
             assert_eq!(data1, 0);
         });
