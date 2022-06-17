@@ -6,7 +6,7 @@ use std::{
 use custom_logger::env_logger_init;
 
 fn enum_sm() {
-    use expr_fsm_0::enum_state_machine::{Header, Protocol1, StateMachine, States};
+    use exper_fsm_0::enum_state_machine::{Header, Protocol1, StateMachine, States};
 
     println!("state_machine_current_state_enum");
 
@@ -54,7 +54,7 @@ fn enum_sm() {
 }
 
 fn fn_ptr_sm() {
-    use expr_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
+    use exper_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
 
     println!("\nstate_machine_current_state_fn_ptr");
 
@@ -100,7 +100,7 @@ fn fn_ptr_sm() {
 }
 
 fn msg_passing_one_thread_fn_ptr() {
-    use expr_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
+    use exper_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
 
     println!("\nmsg_passing_one_thread_fn_ptr:+");
 
@@ -127,7 +127,7 @@ fn msg_passing_one_thread_fn_ptr() {
 }
 
 fn msg_passing_two_threads_fn_ptr() {
-    use expr_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
+    use exper_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
 
     println!("\nmsg_passing_two_threads_fn_ptr:+");
 

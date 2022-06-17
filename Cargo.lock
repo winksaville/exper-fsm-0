@@ -211,8 +211,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "expr-fsm-0"
-version = "0.1.0"
+name = "exper-fsm-0"
+version = "0.2.0"
 dependencies = [
  "criterion",
  "custom-logger",
