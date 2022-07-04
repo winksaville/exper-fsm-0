@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use expr_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
+use exper_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
 
 pub fn dispatch_add_msg_to_state_add_fn_ptr_sm(c: &mut Criterion) {
     c.bench_function("dispatch_add_msg_to_state_add_fn_ptr_sm", |b| {
