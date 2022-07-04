@@ -1,6 +1,6 @@
-# expr-fsm-0
+# exper-fsm-0
 
-A experiment with state machine. I ran into a problem with expr-fsm-1
+A experiment with state machine. I ran into a problem with exper-fsm-1
 which uses traits. That version doesn't compile becasuse there ends up
 to be two mutable references. So this is an attempt without using traits.
 
@@ -163,18 +163,18 @@ fn main() {
 ## Building and running
 
 ```
-wink@3900x 22-05-11T21:43:45.987Z:~/prgs/rust/myrepos/expr-fsm-0 (main)
+wink@3900x 22-05-11T21:43:45.987Z:~/prgs/rust/myrepos/exper-fsm-0 (main)
 $ cargo run
-   Compiling expr-fsm-0 v0.1.0 (/home/wink/prgs/rust/myrepos/expr-fsm-0)
+   Compiling exper-fsm-0 v0.1.0 (/home/wink/prgs/rust/myrepos/exper-fsm-0)
     Finished dev [unoptimized + debuginfo] target(s) in 0.22s
-     Running `target/debug/expr-fsm-0`
+     Running `target/debug/exper-fsm-0`
 state_machine_current_state_enum
 sm.data1=123
 sm.data1=246
 state_machine_current_state_fn_ptr
 sm.data1=123
 sm.data1=246
-wink@3900x 22-05-11T22:08:20.604Z:~/prgs/rust/myrepos/expr-fsm-0 (main)
+wink@3900x 22-05-11T22:08:20.604Z:~/prgs/rust/myrepos/exper-fsm-0 (main)
 ```
 
 
@@ -185,9 +185,9 @@ TODO
 ## Benchmark
 
 ```
-wink@3900x 22-05-11T21:24:19.704Z:~/prgs/rust/myrepos/expr-fsm-0 (main)
+wink@3900x 22-05-11T21:24:19.704Z:~/prgs/rust/myrepos/exper-fsm-0 (main)
 $ cargo criterion
-   Compiling expr-fsm-0 v0.1.0 (/home/wink/prgs/rust/myrepos/expr-fsm-0)
+   Compiling exper-fsm-0 v0.1.0 (/home/wink/prgs/rust/myrepos/exper-fsm-0)
     Finished bench [optimized] target(s) in 1.25s
 Gnuplot not found, using plotters backend
 dispatch_add_msg_to_state_add_current_state_enum                                                                             
