@@ -21,9 +21,17 @@ pub enum Protocol1 {
     },
 }
 
+type StateFn = fn(&mut StateMachine, &Protocol1) -> StateResult;
+
+pub enum StateResult {
+    NotHandled,
+    Handled,
+    TransitionTo(StateFn),
+}
+
 pub struct StateMachine {
-    pub current_state: fn(&mut StateMachine, &Protocol1) -> bool,
-    pub previous_state: fn(&mut StateMachine, &Protocol1) -> bool,
+    pub current_state: StateFn,
+    pub previous_state: StateFn,
     pub current_state_changed: bool,
     pub data1: i32,
 }
@@ -45,7 +53,7 @@ impl StateMachine {
         }
     }
 
-    pub fn transition_to(&mut self, next_state: fn(&mut Self, &Protocol1) -> bool) {
+    pub fn do_transition(&mut self, next_state: StateFn) {
         log::trace!("transition_to: next_state={:0x}", next_state as usize);
         self.previous_state = self.current_state;
         self.current_state = next_state;
@@ -69,26 +77,35 @@ impl StateMachine {
             self.current_state_changed = false;
         }
 
-        // Dispatch the message to state_process_msg ...
-        let processed = (self.current_state)(self, msg);
-        if !processed {
-            // The suggestion is "good", but this makes extending to
-            // additional messages easier
-            #[allow(clippy::collapsible_match, clippy::single_match)]
-            match msg {
-                Protocol1::Get {
-                    hdr: Header { tx_response },
-                    data1: _,
-                } => {
-                    if let Some(tx_rsp) = tx_response {
-                        let rsp_msg = Protocol1::Get {
-                            hdr: Header { tx_response: None },
-                            data1: self.data1,
-                        };
-                        tx_rsp.send(rsp_msg).unwrap();
+        // Invoke the current state funtion processing the result
+        match (self.current_state)(self, msg) {
+            StateResult::NotHandled => {
+                // Handle messages we can and ignore all other messages
+
+                // The suggestion is "good", but this makes extending to
+                // additional messages easier
+                #[allow(clippy::collapsible_match, clippy::single_match)]
+                match msg {
+                    Protocol1::Get {
+                        hdr: Header { tx_response },
+                        data1: _,
+                    } => {
+                        if let Some(tx_rsp) = tx_response {
+                            let rsp_msg = Protocol1::Get {
+                                hdr: Header { tx_response: None },
+                                data1: self.data1,
+                            };
+                            tx_rsp.send(rsp_msg).unwrap();
+                        }
                     }
+                    _ => {} // Ignore all other messages
                 }
-                _ => {} // Ignore all other messages
+            },
+            StateResult::Handled => {
+                // Nothing to do
+            }
+            StateResult::TransitionTo(next_state) => {
+                self.do_transition(next_state);
             }
         }
 
@@ -106,22 +123,19 @@ impl StateMachine {
         log::trace!("state_enter_add_or_mul: msg={:?}", msg);
     }
 
-    pub fn state_process_msg_add_or_mul(&mut self, msg: &Protocol1) -> bool {
+    pub fn state_process_msg_add_or_mul(&mut self, msg: &Protocol1) -> StateResult {
         log::trace!("state_process_msg_ add_or_mul: msg={:?}", msg);
-        let processed = match *msg {
+        match *msg {
             Protocol1::Add { f1, hdr: _ } => {
                 self.data1 += f1;
-                true
+                StateResult::TransitionTo(Self::state_process_msg_any)
             }
             Protocol1::Mul { f1, hdr: _ } => {
                 self.data1 *= f1;
-                true
+                StateResult::TransitionTo(Self::state_process_msg_any)
             }
-            _ => false,
-        };
-        self.transition_to(Self::state_process_msg_any);
-
-        processed
+            _ => StateResult::NotHandled,
+        }
     }
 
     pub fn state_exit_add_or_mul(&mut self, msg: &Protocol1) {
@@ -132,7 +146,7 @@ impl StateMachine {
         log::trace!("state_enter_any: msg={:?}", msg);
     }
 
-    pub fn state_process_msg_any(&mut self, msg: &Protocol1) -> bool {
+    pub fn state_process_msg_any(&mut self, msg: &Protocol1) -> StateResult {
         log::trace!("state_process_msg_any: msg={:?}", msg);
         match &*msg {
             Protocol1::Add { f1, hdr: _ } => {
@@ -154,9 +168,8 @@ impl StateMachine {
                 }
             }
         }
-        self.transition_to(Self::state_process_msg_add_or_mul);
 
-        true
+        StateResult::TransitionTo(Self::state_process_msg_add_or_mul)
     }
 
     pub fn state_exit_any(&mut self, msg: &Protocol1) {
