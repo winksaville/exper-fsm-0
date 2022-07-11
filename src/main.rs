@@ -60,7 +60,7 @@ fn fn_ptr_sm() {
 
     // Create a sm and validate it's in the expected state
     let mut sm = StateMachine::default();
-    assert!(sm.get_process() as usize == StateMachine::state_process_add_or_mul as usize);
+    assert!(sm.current_state_fns.unwrap().process as usize == StateMachine::state_process_add_or_mul as usize);
 
     // Dispatch the message and validate it transitioned
     let msg = Protocol1::Add {
@@ -68,17 +68,17 @@ fn fn_ptr_sm() {
         f1: 123,
     };
     sm.dispatch_msg(&msg);
-    assert!(sm.get_process() as usize == StateMachine::state_process_any as usize);
+    assert!(sm.current_state_fns.unwrap().process as usize == StateMachine::state_process_any as usize);
     println!("sm.data1={}", sm.data1);
 
     // Dispatch the message and validate it transitioned
     sm.dispatch_msg(&msg);
-    assert!(sm.get_process() as usize == StateMachine::state_process_add_or_mul as usize);
+    assert!(sm.current_state_fns.unwrap().process as usize == StateMachine::state_process_add_or_mul as usize);
     println!("sm.data1={}", sm.data1);
 
     // Dispatch the message and validate it transitioned
     sm.dispatch_msg(&msg);
-    assert!(sm.get_process() as usize == StateMachine::state_process_any as usize);
+    assert!(sm.current_state_fns.unwrap().process as usize == StateMachine::state_process_any as usize);
     println!("sm.data1={}", sm.data1);
 
     let (tx, rx): (Sender<Protocol1>, Receiver<Protocol1>) = std::sync::mpsc::channel();

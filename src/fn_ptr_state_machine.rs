@@ -23,9 +23,12 @@ pub enum Protocol1 {
     },
 }
 
-type StateFn = for<'sm, 'a> fn(&'sm mut StateMachine<'sm>, &'a Protocol1) -> StateResult;
-type EnterFn = for<'sm, 'a> fn(&'sm mut StateMachine<'sm>, &'a Protocol1);
-type ExitFn = for<'sm , 'a> fn(&'sm mut StateMachine<'sm>, &'a Protocol1);
+type StateFn<'a> = fn(&mut StateMachine<'a>, &'a Protocol1) -> StateResult;
+type EnterFn<'a> = fn(&mut StateMachine<'a>, &'a Protocol1);
+type ExitFn<'a> = fn(&mut StateMachine<'a>, &'a Protocol1);
+//type StateFn = for<'sm, 'a> fn(&'sm mut StateMachine<'sm>, &'a Protocol1) -> StateResult;
+//type EnterFn = for<'sm, 'a> fn(&'sm mut StateMachine<'sm>, &'a Protocol1);
+//type ExitFn = for<'sm , 'a> fn(&'sm mut StateMachine<'sm>, &'a Protocol1);
 
 pub enum StateResult {
     NotHandled,
@@ -33,57 +36,110 @@ pub enum StateResult {
     TransitionTo(usize),
 }
 
-pub struct StateFns {
+pub struct StateFns<'a> {
     pub parent: Option<usize>,
-    pub enter: Option<EnterFn>,
-    pub process: StateFn,
-    pub exit: Option<ExitFn>,
+    pub enter: Option<EnterFn<'a>>,
+    pub process: StateFn<'a>,
+    pub exit: Option<ExitFn<'a>>,
 }
 
-pub struct StateMachine<'sm> {
-    pub state_fns: Vec<StateFns>,
-    pub current_state_fns: &'sm StateFns,
-    pub previous_state_fns: &'sm StateFns,
+pub struct StateMachine<'a> {
+    pub state_fns: Vec<StateFns<'a>>,
+    pub current_state_fns: Option<&'a StateFns<'a>>,
+    pub previous_state_fns: Option<&'a StateFns<'a>>,
     pub current_state_changed: bool,
     pub data1: i32,
 }
 
-impl<'sm> Default for StateMachine<'sm> {
+impl<'a> Default for StateMachine<'a> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'sm, 'a> StateMachine<'sm> {
+impl<'a> StateMachine<'a> {
     const STATE_ADD_OR_MUL_IDX: usize = 0;
     const STATE_ANY_IDX: usize = 1;
 
     pub fn new() -> Self { //StateMachine<'sm> {
-        let sfv = vec![
-            // STATE_ADD_OR_MUL_IDX
-            StateFns {
-                parent: None,
-                enter: None, //Some(Self::state_enter_add_or_mul),
-                process: Self::state_process_add_or_mul,
-                exit: None, //Some(Self::state_exit_add_or_mul),
-            },
-            // STATE_ANY_IDX
-            StateFns {
-                parent: None,
-                enter: None, //Some(Self::state_enter_any),
-                process: Self::state_process_any,
-                exit: None, //Some(Self::state_exit_any),
-            }
-        ];
+        //let sfv = vec![
+        //    // STATE_ADD_OR_MUL_IDX
+        //    StateFns {
+        //        parent: None,
+        //        enter: None, //Some(Self::state_enter_add_or_mul),
+        //        process: Self::state_process_add_or_mul,
+        //        exit: None, //Some(Self::state_exit_add_or_mul),
+        //    },
+        //    // STATE_ANY_IDX
+        //    StateFns {
+        //        parent: None,
+        //        enter: None, //Some(Self::state_enter_any),
+        //        process: Self::state_process_any,
+        //        exit: None, //Some(Self::state_exit_any),
+        //    }
+        //];
 
-        let initial_state_fns = &sfv[0];
-        StateMachine {
-            state_fns:  sfv,
-            current_state_fns: initial_state_fns,
-            previous_state_fns: initial_state_fns,
+        //let initial_state_fns = &sfv[0];
+        //StateMachine {
+        //    state_fns:  sfv,
+        //    current_state_fns: Some(initial_state_fns),
+        //    previous_state_fns: Some(initial_state_fns),
+        //    current_state_changed: true,
+        //    data1: 0,
+        //}
+        let mut sm = StateMachine {
+            state_fns:  vec![
+                // STATE_ADD_OR_MUL_IDX
+                StateFns {
+                    parent: None,
+                    enter: None, //Some(Self::state_enter_add_or_mul),
+                    process: Self::state_process_add_or_mul,
+                    exit: None, //Some(Self::state_exit_add_or_mul),
+                },
+                // STATE_ANY_IDX
+                StateFns {
+                    parent: None,
+                    enter: None, //Some(Self::state_enter_any),
+                    process: Self::state_process_any,
+                    exit: None, //Some(Self::state_exit_any),
+                }
+            ],
+            current_state_fns: None,
+            previous_state_fns: None,
             current_state_changed: true,
             data1: 0,
-        }
+        };
+
+        let initial_state_fns = &sm.state_fns[0];
+        sm.current_state_fns = Some(initial_state_fns);
+        sm.previous_state_fns = Some(initial_state_fns);
+
+        // $ cargo build
+        //    Compiling exper-fsm-0 v0.4.0 (/home/wink/prgs/rust/myrepos/exper-fsm-0)
+        // error[E0515]: cannot return value referencing local data `sm.state_fns`
+        //    --> src/fn_ptr_state_machine.rs:142:9
+        //     |
+        // 113 |         let initial_state_fns = &sm.state_fns[0];
+        //     |                                  ------------ `sm.state_fns` is borrowed here
+        // ...
+        // 142 |         sm
+        //     |         ^^ returns a value referencing data owned by the current function
+            // 
+        // error[E0505]: cannot move out of `sm` because it is borrowed
+        //    --> src/fn_ptr_state_machine.rs:142:9
+        //     |
+        // 60  | impl<'a> StateMachine<'a> {
+        //     |      -- lifetime `'a` defined here
+        // ...
+        // 113 |         let initial_state_fns = &sm.state_fns[0];
+        //     |                                  ------------ borrow of `sm.state_fns` occurs here
+        // ...
+        // 142 |         sm
+        //     |         ^^
+        //     |         |
+        //     |         move out of `sm` occurs here
+        //     |         returning this value requires that `sm.state_fns` is borrowed for `'a`
+        sm
     }
 
     // TODO: This is not correct, it's returning an uninitialized memory
@@ -115,7 +171,7 @@ impl<'sm, 'a> StateMachine<'sm> {
     //        unsafe { self.current_state_fns.exit }
     //}
 
-    pub fn dispatch_msg(&'sm mut self, msg: &'a Protocol1) {
+    pub fn dispatch_msg(&mut self, msg: &'a Protocol1) {
         //log::trace!(
         //    "dispatch_msg: current_state_fns_idx={}",
         //    self.current_state_fns as usize // this doesn't compile!!!
@@ -123,14 +179,14 @@ impl<'sm, 'a> StateMachine<'sm> {
 
         if self.current_state_changed {
             // Handle state_enter
-            if let Some(state_enter) = self.current_state_fns.enter {
-                (state_enter)(self, msg)
+            if let Some(state_enter) = self.current_state_fns.unwrap().enter {
+                state_enter(self, msg)
             }
             self.current_state_changed = false;
         }
 
         // Invoke the current state funtion processing the result
-        let process = self.current_state_fns.process;
+        let process = self.current_state_fns.unwrap().process;
         match (process)(self, msg) {
             StateResult::NotHandled => {
                 // Handle messages we can and ignore all other messages
@@ -166,17 +222,17 @@ impl<'sm, 'a> StateMachine<'sm> {
         }
 
         if self.current_state_changed {
-            if let Some(state_exit) = self.current_state_fns.exit {
+            if let Some(state_exit) = self.current_state_fns.unwrap().exit {
                 (state_exit)(self, msg)
             }
         }
     }
 
-    pub fn state_enter_add_or_mul(&'sm mut self, msg: &'a Protocol1) {
+    pub fn state_enter_add_or_mul(&mut self, msg: &'a Protocol1) {
         log::trace!("state_enter_add_or_mul: msg={:?}", msg);
     }
 
-    pub fn state_process_add_or_mul(&'sm mut self, msg: &'a Protocol1) -> StateResult {
+    pub fn state_process_add_or_mul(&mut self, msg: &'a Protocol1) -> StateResult {
         log::trace!("state_process_add_or_mul: msg={:?}", msg);
         match *msg {
             Protocol1::Add { f1, hdr: _ } => {
@@ -191,15 +247,15 @@ impl<'sm, 'a> StateMachine<'sm> {
         }
     }
 
-    pub fn state_exit_add_or_mul(&'sm mut self, msg: &'a Protocol1) {
+    pub fn state_exit_add_or_mul(&mut self, msg: &'a Protocol1) {
         log::trace!("state_exit_add_or_mul: msg={:?}", msg);
     }
 
-    pub fn state_enter_any(&'sm mut self, msg: &'a Protocol1) {
+    pub fn state_enter_any(&mut self, msg: &'a Protocol1) {
         log::trace!("state_enter_any: msg={:?}", msg);
     }
 
-    pub fn state_process_any(&'sm mut self, msg: &'a Protocol1) -> StateResult {
+    pub fn state_process_any(&mut self, msg: &'a Protocol1) -> StateResult {
         log::trace!("state_process_any: msg={:?}", msg);
         match &*msg {
             Protocol1::Add { f1, hdr: _ } => {
@@ -225,7 +281,7 @@ impl<'sm, 'a> StateMachine<'sm> {
         StateResult::TransitionTo(Self::STATE_ADD_OR_MUL_IDX)
     }
 
-    pub fn state_exit_any(&'sm mut self, msg: &'a Protocol1) {
+    pub fn state_exit_any(&mut self, msg: &'a Protocol1) {
         log::trace!("state_exit_any: msg={:?}", msg);
     }
 }
