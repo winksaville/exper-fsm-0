@@ -39,7 +39,7 @@ pub struct StateFns {
 }
 
 pub struct StateMachine {
-    pub state_fns: Vec<StateFns>,
+    pub state_fns: [StateFns; 2],
     pub current_state_fns_idx: usize,
     pub previous_state_fns_idx: usize,
     pub current_state_changed: bool,
@@ -59,7 +59,7 @@ impl StateMachine {
     pub fn new() -> Self {
         let initial_state_fns_idx = 0usize;
         StateMachine {
-            state_fns: vec![
+            state_fns: [
                 // STATE_ADD_OR_MUL_IDX
                 StateFns {
                     parent: None,
