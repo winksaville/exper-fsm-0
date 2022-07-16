@@ -8,7 +8,7 @@ use custom_logger::env_logger_init;
 fn enum_sm() {
     use exper_fsm_0::enum_state_machine::{Header, Protocol1, StateMachine, States};
 
-    println!("state_machine_current_state_enum");
+    println!("\nenum_sm");
 
     // Create a sm and validate it's in the expected state
     let mut sm = StateMachine::default();
@@ -56,7 +56,7 @@ fn enum_sm() {
 fn fn_ptr_sm() {
     use exper_fsm_0::fn_ptr_state_machine::{Header, Protocol1, StateMachine};
 
-    println!("\nstate_machine_current_state_fn_ptr");
+    println!("\nfn_ptr_sm");
 
     // Create a sm and validate it's in the expected state
     let mut sm = StateMachine::default();
@@ -79,6 +79,52 @@ fn fn_ptr_sm() {
     // Dispatch the message and validate it transitioned
     sm.dispatch_msg(&msg);
     assert!(sm.state_fns[sm.current_state_fns_idx].process as usize == StateMachine::state_process_any as usize);
+    println!("sm.data1={}", sm.data1);
+
+    let (tx, rx): (Sender<Protocol1>, Receiver<Protocol1>) = std::sync::mpsc::channel();
+    let msg = Protocol1::Get {
+        hdr: Header {
+            tx_response: Some(tx),
+        },
+        data1: 0,
+    };
+    sm.dispatch_msg(&msg);
+    let res = rx.recv().unwrap();
+    match &res {
+        Protocol1::Get { hdr: _, data1 } => {
+            println!("Get res={}", data1);
+            assert_eq!(*data1, sm.data1);
+        }
+        _ => panic!("Expected Get response res={:?}", res),
+    }
+}
+
+fn fn_ptr_hsm() {
+    use exper_fsm_0::fn_ptr_hsm::{Header, Protocol1, StateMachine};
+
+    println!("\nfn_ptr_hsm");
+
+    // Create a sm and validate it's in the expected state
+    let mut sm = StateMachine::default();
+    assert_eq!(sm.state_fns[sm.current_state_fns_idx].process as usize, StateMachine::state_process_add as usize);
+
+    // Dispatch the message and validate it transitioned
+    let msg = Protocol1::Add {
+        hdr: Header { tx_response: None },
+        f1: 123,
+    };
+    sm.dispatch_msg(&msg);
+    assert!(sm.state_fns[sm.current_state_fns_idx].process as usize == StateMachine::state_process_add as usize);
+    println!("sm.data1={}", sm.data1);
+
+    // Dispatch the message and validate it transitioned
+    sm.dispatch_msg(&msg);
+    assert!(sm.state_fns[sm.current_state_fns_idx].process as usize == StateMachine::state_process_add as usize);
+    println!("sm.data1={}", sm.data1);
+
+    // Dispatch the message and validate it transitioned
+    sm.dispatch_msg(&msg);
+    assert!(sm.state_fns[sm.current_state_fns_idx].process as usize == StateMachine::state_process_add as usize);
     println!("sm.data1={}", sm.data1);
 
     let (tx, rx): (Sender<Protocol1>, Receiver<Protocol1>) = std::sync::mpsc::channel();
@@ -184,6 +230,7 @@ fn main() {
 
     enum_sm();
     fn_ptr_sm();
+    fn_ptr_hsm();
 
     msg_passing_one_thread_fn_ptr();
     msg_passing_two_threads_fn_ptr();
