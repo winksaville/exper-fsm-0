@@ -42,10 +42,10 @@ const MAX_STATE_FNS: usize = 3;
 
 pub struct StateMachine {
     pub state_fns: [StateFns; MAX_STATE_FNS],
-    pub enter_fns_idxs: Vec<usize>,
-    pub exit_fns_idxs: VecDeque<usize>,
-    pub current_state_fns_idx: usize,
-    pub previous_state_fns_idx: usize,
+    pub enter_fns_hdls: Vec<usize>,
+    pub exit_fns_hdls: VecDeque<usize>,
+    pub current_state_fns_hdl: usize,
+    pub previous_state_fns_hdl: usize,
     pub current_state_changed: bool,
     pub data1: i32,
 }
@@ -58,16 +58,16 @@ impl Default for StateMachine {
 
 impl StateMachine {
     #[allow(unused)]
-    const STATE_BASE_IDX: usize = 0;
+    const STATE_BASE_HDL: usize = 0;
     #[allow(unused)]
-    const STATE_BASE_INTERMEDIATE_IDX: usize = 0;
-    const STATE_ADD_IDX: usize = 2;
+    const STATE_BASE_INTERMEDIATE_HDL: usize = 0;
+    const STATE_ADD_HDL: usize = 2;
 
     pub fn new() -> Self {
-        let initial_state_fns_idx = Self::STATE_ADD_IDX;
+        let initial_state_fns_hdl = Self::STATE_ADD_HDL;
         let mut sm = StateMachine {
             state_fns: [
-                // STATE_BASE_IDX
+                // STATE_BASE_HDL
                 StateFns {
                     name: "state_base".to_owned(),
                     parent: None,
@@ -76,7 +76,7 @@ impl StateMachine {
                     exit: Some(Self::state_exit_base),
                     active: false,
                 },
-                // STATE_INTERMEDIATE_IDX
+                // STATE_INTERMEDIATE_HDL
                 StateFns {
                     name: "state_intermediate".to_owned(),
                     parent: Some(0),
@@ -85,7 +85,7 @@ impl StateMachine {
                     exit: Some(Self::state_exit_intermediate),
                     active: false,
                 },
-                // STATE_ADD_IDX
+                // STATE_ADD_HDL
                 StateFns {
                     name: "state_process_add".to_owned(),
                     parent: Some(1),
@@ -95,114 +95,121 @@ impl StateMachine {
                     active: false,
                 },
             ],
-            enter_fns_idxs: Vec::<usize>::with_capacity(MAX_STATE_FNS),
-            exit_fns_idxs: VecDeque::<usize>::with_capacity(MAX_STATE_FNS),
-            current_state_fns_idx: initial_state_fns_idx,
-            previous_state_fns_idx: initial_state_fns_idx,
+            enter_fns_hdls: Vec::<usize>::with_capacity(MAX_STATE_FNS),
+            exit_fns_hdls: VecDeque::<usize>::with_capacity(MAX_STATE_FNS),
+            current_state_fns_hdl: initial_state_fns_hdl,
+            previous_state_fns_hdl: initial_state_fns_hdl,
             current_state_changed: true,
             data1: 0,
         };
 
+        let name = sm.state_name();
+        println!("new:+ inital state={}", name);
+
         // Initialize so transition to initial state works
-        sm.initial_enter_fns_idxs();
+        sm.initial_enter_fns_hdls();
 
         sm
     }
 
+    fn state_name(&self) -> &str {
+        &self.state_fns[self.current_state_fns_hdl].name
+    }
+
     // When the state machine starts there will be no fn's to
-    // exit so we initialize only the enter_fns_idxs.
-    fn initial_enter_fns_idxs(&mut self) {
-        let mut enter_idx = self.current_state_fns_idx;
+    // exit so we initialize only the enter_fns_hdls.
+    fn initial_enter_fns_hdls(&mut self) {
+        let mut enter_hdl = self.current_state_fns_hdl;
         loop {
-            log::trace!("initial_enter_fns_idxs: pushishing {} at enter_idx={}", self.state_fns[enter_idx].name, enter_idx);
-            self.enter_fns_idxs.push(enter_idx);
-            enter_idx = if let Some(idx) = self.state_fns[enter_idx].parent {
-                idx
+            log::trace!("initial_enter_fns_hdls: pushishing {} at enter_hdl={}", self.state_fns[enter_hdl].name, enter_hdl);
+            self.enter_fns_hdls.push(enter_hdl);
+            enter_hdl = if let Some(hdl) = self.state_fns[enter_hdl].parent {
+                hdl
             } else {
                 break;
             };
         }
     }
 
-    // Starting at self.current_state_fns_idx generate the
+    // Starting at self.current_state_fns_hdl generate the
     // list of StateFns that we're going to exit. If exit_sentinel is None
-    // then exit from current_state_fns_idx and all of its parents.
-    // If exit_sentinel is Some then exit from the current state_fns_idx
+    // then exit from current_state_fns_hdl and all of its parents.
+    // If exit_sentinel is Some then exit from the current state_fns_hdl
     // up to but not including the exit_sentinel.
-    fn setup_exit_fns_idxs(&mut self, exit_sentinel: Option<usize>) {
+    fn setup_exit_fns_hdls(&mut self, exit_sentinel: Option<usize>) {
 
-        let mut exit_idx = self.current_state_fns_idx;
+        let mut exit_hdl = self.current_state_fns_hdl;
         loop {
-            log::trace!("setup_exit_fns_idxs: push_back {} at exit_idx={}", self.state_fns[exit_idx].name, exit_idx);
-            self.exit_fns_idxs.push_back(exit_idx);
+            log::trace!("setup_exit_fns_hdls: push_back {} at exit_hdl={}", self.state_fns[exit_hdl].name, exit_hdl);
+            self.exit_fns_hdls.push_back(exit_hdl);
 
-            if Some(exit_idx) == exit_sentinel {
+            if Some(exit_hdl) == exit_sentinel {
                 // This handles the special case there we're transition_to yourself
                 return;
             }
 
-            exit_idx = if let Some(idx) = self.state_fns[exit_idx].parent {
-                idx
+            exit_hdl = if let Some(hdl) = self.state_fns[exit_hdl].parent {
+                hdl
             } else {
                 // No parent we're done
                 return;
             };
 
-            if Some(exit_idx) == exit_sentinel {
+            if Some(exit_hdl) == exit_sentinel {
                 // Reached the exit sentinel so we're done
                 return;
             }
         }
     }
 
-    fn setup_exit_enter_fns_idxs(&mut self, next_state_idx: usize) {
-        let mut cur_idx = next_state_idx;
+    fn setup_exit_enter_fns_hdls(&mut self, next_state_hdl: usize) {
+        let mut cur_hdl = next_state_hdl;
 
         // Setup the enter vector
         let exit_sentinel = loop {
-            log::trace!("setup_exit_enter_fns_idxs: pushing {} at enter_idx={}", self.state_fns[cur_idx].name, cur_idx);
-            self.enter_fns_idxs.push(cur_idx);
+            log::trace!("setup_exit_enter_fns_hdls: pushing {} at enter_hdl={}", self.state_fns[cur_hdl].name, cur_hdl);
+            self.enter_fns_hdls.push(cur_hdl);
 
-            cur_idx = if let Some(idx) = self.state_fns[cur_idx].parent {
-                idx
+            cur_hdl = if let Some(hdl) = self.state_fns[cur_hdl].parent {
+                hdl
             } else {
-                // Exit state_fns[self.current_state_fns_idx] and all its parents
+                // Exit state_fns[self.current_state_fns_hdl] and all its parents
                 break None;
             };
 
-            if self.state_fns[cur_idx].active {
-                // Exit state_fns[self.current_state_fns_idx] and
-                // parents upto but excluding state_fns[cur_idx]
-                break Some(cur_idx);
+            if self.state_fns[cur_hdl].active {
+                // Exit state_fns[self.current_state_fns_hdl] and
+                // parents upto but excluding state_fns[cur_hdl]
+                break Some(cur_hdl);
             }
         };
 
         // Setup the exit vector
-        self.setup_exit_fns_idxs(exit_sentinel);
+        self.setup_exit_fns_hdls(exit_sentinel);
     }
 
-    pub fn dispatch_msg_idx(&mut self, msg: &Protocol1, idx: usize) {
-        log::trace!("dispatch_msg_idx:+ idx={}", idx);
+    pub fn dispatch_msg_hdl(&mut self, msg: &Protocol1, hdl: usize) {
+        log::trace!("dispatch_msg_hdl:+ hdl={}", hdl);
 
         if self.current_state_changed {
             // Execute the enter functions
-            while let Some(enter_idx) = self.enter_fns_idxs.pop() {
-                if let Some(state_enter) = self.state_fns[enter_idx].enter {
-                    log::trace!("dispatch_msg_idx: entering {} via enter={} at enter_idx={}", self.state_fns[enter_idx].name, state_enter as usize, enter_idx);
+            while let Some(enter_hdl) = self.enter_fns_hdls.pop() {
+                if let Some(state_enter) = self.state_fns[enter_hdl].enter {
+                    log::trace!("dispatch_msg_hdl: entering {} via enter={} at enter_hdl={}", self.state_fns[enter_hdl].name, state_enter as usize, enter_hdl);
                     (state_enter)(self, msg);
-                    self.state_fns[enter_idx].active = true;
+                    self.state_fns[enter_hdl].active = true;
                 }
             }
             self.current_state_changed = false;
         }
 
         // Invoke the current state funtion processing the result
-        log::trace!("dispatch_msg_idx: processing with {} via process={} at idx={}", self.state_fns[idx].name, self.state_fns[idx].process as usize, idx);
-        match (self.state_fns[idx].process)(self, msg) {
+        log::trace!("dispatch_msg_hdl: processing with {} via process={} at hdl={}", self.state_fns[hdl].name, self.state_fns[hdl].process as usize, hdl);
+        match (self.state_fns[hdl].process)(self, msg) {
             StateResult::NotHandled => {
-                log::trace!("dispatch_msg_idx: NotHandled idx={}", idx);
-                if let Some(parent_idx) = self.state_fns[idx].parent {
-                    self.dispatch_msg_idx(msg, parent_idx);
+                log::trace!("dispatch_msg_hdl: NotHandled hdl={}", hdl);
+                if let Some(parent_hdl) = self.state_fns[hdl].parent {
+                    self.dispatch_msg_hdl(msg, parent_hdl);
                 } else {
                     // No parent
                     #[allow(clippy::collapsible_match, clippy::single_match)]
@@ -229,40 +236,40 @@ impl StateMachine {
             },
             StateResult::Handled => {
                 // Nothing to do
-                log::trace!("dispatch_msg_idx: Handled idx={}", idx);
+                log::trace!("dispatch_msg_hdl: Handled hdl={}", hdl);
             }
-            StateResult::TransitionTo(next_state_idx) => {
-                log::trace!("dispatch_msg_idx: transition_to {} at next_state_idx={}", self.state_fns[next_state_idx].name, next_state_idx);
-                self.setup_exit_enter_fns_idxs(next_state_idx);
+            StateResult::TransitionTo(next_state_hdl) => {
+                log::trace!("dispatch_msg_hdl: transition_to {} at next_state_hdl={}", self.state_fns[next_state_hdl].name, next_state_hdl);
+                self.setup_exit_enter_fns_hdls(next_state_hdl);
 
-                self.previous_state_fns_idx = self.current_state_fns_idx;
-                self.current_state_fns_idx = next_state_idx;
+                self.previous_state_fns_hdl = self.current_state_fns_hdl;
+                self.current_state_fns_hdl = next_state_hdl;
                 self.current_state_changed = true;
 
             }
         }
 
         if self.current_state_changed {
-            while let Some(exit_idx) = self.exit_fns_idxs.pop_front() {
-                if let Some(state_exit) = self.state_fns[exit_idx].exit {
-                    log::trace!("dispatch_msg_idx: exiting {} via exit={} at exit_idx={}", self.state_fns[exit_idx].name, state_exit as usize, exit_idx);
+            while let Some(exit_hdl) = self.exit_fns_hdls.pop_front() {
+                if let Some(state_exit) = self.state_fns[exit_hdl].exit {
+                    log::trace!("dispatch_msg_hdl: exiting {} via exit={} at exit_hdl={}", self.state_fns[exit_hdl].name, state_exit as usize, exit_hdl);
                     (state_exit)(self, msg)
                 }
             }
         }
 
-        log::trace!("dispatch_msg_idx:- idx={}", idx);
+        log::trace!("dispatch_msg_hdl:- hdl={}", hdl);
     }
 
     pub fn dispatch_msg(&mut self, msg: &Protocol1) {
         log::trace!(
-            "dispatch_msg:+ current_state_fns_idx={}",
-            self.current_state_fns_idx as usize
+            "dispatch_msg:+ current_state_fns_hdl={}",
+            self.current_state_fns_hdl as usize
         );
-        self.dispatch_msg_idx(msg, self.current_state_fns_idx);
+        self.dispatch_msg_hdl(msg, self.current_state_fns_hdl);
         log::trace!(
-            "dispatch_msg:- current_state_fns_idx={}",
-            self.current_state_fns_idx as usize
+            "dispatch_msg:- current_state_fns_hdl={}",
+            self.current_state_fns_hdl as usize
         );
     }
 
@@ -322,7 +329,7 @@ impl StateMachine {
         match *msg {
             Protocol1::Add { f1, hdr: _ } => {
                 self.data1 += f1;
-                StateResult::TransitionTo(Self::STATE_ADD_IDX)
+                StateResult::TransitionTo(Self::STATE_ADD_HDL)
             }
             _ => StateResult::NotHandled,
         }

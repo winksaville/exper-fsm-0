@@ -106,7 +106,7 @@ fn fn_ptr_hsm() {
 
     // Create a sm and validate it's in the expected state
     let mut sm = StateMachine::default();
-    assert_eq!(sm.state_fns[sm.current_state_fns_idx].process as usize, StateMachine::state_process_add as usize);
+    assert_eq!(sm.state_fns[sm.current_state_fns_hdl].process as usize, StateMachine::state_process_add as usize);
 
     // Dispatch the message and validate it transitioned
     let msg = Protocol1::Add {
@@ -114,17 +114,17 @@ fn fn_ptr_hsm() {
         f1: 123,
     };
     sm.dispatch_msg(&msg);
-    assert!(sm.state_fns[sm.current_state_fns_idx].process as usize == StateMachine::state_process_add as usize);
+    assert!(sm.state_fns[sm.current_state_fns_hdl].process as usize == StateMachine::state_process_add as usize);
     println!("sm.data1={}", sm.data1);
 
     // Dispatch the message and validate it transitioned
     sm.dispatch_msg(&msg);
-    assert!(sm.state_fns[sm.current_state_fns_idx].process as usize == StateMachine::state_process_add as usize);
+    assert!(sm.state_fns[sm.current_state_fns_hdl].process as usize == StateMachine::state_process_add as usize);
     println!("sm.data1={}", sm.data1);
 
     // Dispatch the message and validate it transitioned
     sm.dispatch_msg(&msg);
-    assert!(sm.state_fns[sm.current_state_fns_idx].process as usize == StateMachine::state_process_add as usize);
+    assert!(sm.state_fns[sm.current_state_fns_hdl].process as usize == StateMachine::state_process_add as usize);
     println!("sm.data1={}", sm.data1);
 
     let (tx, rx): (Sender<Protocol1>, Receiver<Protocol1>) = std::sync::mpsc::channel();
